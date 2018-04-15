@@ -17,30 +17,67 @@ var server = http.createServer(function(request, response){
   var pathNoQuery = parsedUrl.pathname
   var queryObject = parsedUrl.query
   var method = request.method
-
-
+  console.log(path);
+  console.log(parsedUrl);
   if(path=="/"){
+    var string=fs.readFileSync("./index.html",'utf8')
+    var amount=fs.readFileSync('./db','utf8')
+    string=string.replace('&&&amount&&&',amount)
     response.setHeader('Content-Type', 'text/html; charset=utf-8')
-    response.write('<!DOCTYPE>\n<html>'  + 
-      '<head><link rel="stylesheet" href="/style.css">' +
-      '</head><body>'  +
-      '<h1>Hello World</h1>' +
-      '<script src="/main.js"></script>' +
-      '</body></html>')
+    response.write(string)
+    response.end()
 
   }else if(path=="/style.css"){
     response.setHeader('Content-Type', 'text/css; charset=utf-8')
     response.write('body{background-color: #ddd;}h1{color: red;}')
+    response.end()
 
   }else if(path=="/main.js"){
     response.setHeader('Content-Type', 'text/javascript; charset=utf-8')
     response.write('alert("这是JS执行的")')
+    response.end()
+
+  }else if(path=='/pay' && method.toUpperCase()==='POST'){
+    response.setHeader('Content-Type', 'text/javascript; charset=utf-8')
+    var amount=fs.readFileSync('./db','utf8')
+    var newAmount=amount-1;
+    if(Math.random()>0.5){
+      fs.writeFileSync("./db",newAmount)
+      response.write('success')
+    }else{
+      response.write('fail')
+    }
+    response.end()
+
+  }else if(path=='/payImg'){
+    var amount=fs.readFileSync('./db','utf8')
+    var newAmount=amount-1;
+    if(Math.random()>0.5){
+      fs.writeFileSync("./db",newAmount)
+      response.setHeader('Content-Type', 'images/png')
+      response.statusCode=200
+      response.write(fs.readFileSync('./timg.jpeg'))
+    }else{
+      response.statusCode=400
+      response.write('fail')
+    }
+    response.end()
+
+  }else if(parsedUrl.pathname=='/payScript'){
+    var amount=fs.readFileSync('./db','utf8')
+    var newAmount=amount-1;  
+    fs.writeFileSync("./db",newAmount)
+    response.setHeader('Content-Type', 'application/javascript')
+    response.statusCode=200
+    response.write(parsedUrl.query.callback
+      +".call(undefined,{'success':true,'left':"+newAmount+"})");
+    response.end()
 
   }else{
     response.statusCode = 404
-  }
-  
     response.end()
+  }
+   
 })
 
 server.listen(port)

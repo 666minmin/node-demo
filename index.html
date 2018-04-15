@@ -1,0 +1,96 @@
+<title>首页</title>
+<link rel="stylesheet" href="style.css">
+<h1>JSONP知识点：</h1>
+<h2>准备工作</h2>
+<ul>
+    <li>hosts文件里面设置：<br>
+        127.0.0.1 jack.com <br>
+        127.0.0.1 rose.com
+    </li>
+    <li>请求方：rose.com:8080 前端程序员（浏览器）</li>
+    <li>响应方：jack.com:8888 后端程序员（服务器）</li>
+</ul>
+<h2>什么是JSONP？</h2>
+<ul>
+    <li>请求方创建script,src指向响应方，同时传一个查询参数？callback=yyy</li>
+    <li>
+        响应方根据查询参数callback,构造形如：<br>
+        1、yyy.call(undefined,'你要的数据');<br>
+        2、yyy('你要的数据')
+    </li>
+    <li>浏览器接收到响应，就会执行yyy.call（undefined,'你要的数据'）</li>
+    <li>那么请求方就知道了他要的数据</li>
+</ul>
+<h2>为什么JSONP不支持POST请求?</h2>
+<div>JSONP是通过动态创建script实现的，动态创建script的时候只能用get不能用post</div>
+<h2>例子实现</h2>
+<h5>您的账户余额是：<span id="amount">&&&amount&&&</span></h5>
+<button id="button1">button1-付款：页面数据修改，刷新回复初始值</button><br>
+<button id="button2">button2-付款：页面数据修改，数据库修改</button><br>
+<button id="button4">button4-付款：用DOM方式解决跨越问题</button><br>
+<button id="button5">button5-付款：jquery,ajax方式解决跨越问题</button><br>
+<form action="/pay" method="post" target="result">
+    <input type="submit" value="button3-付款：页面返回结果显示在iframe">
+</form>
+
+<iframe name="result" src="about:blank" frameborder="0">
+</iframe>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script>
+    //button1-付款：页面数据修改，数据库数据不修改
+    button1.addEventListener('click',function(){
+        var n=amount.innerText;
+        var number=parseInt(n,10);
+        var newNumber=number-1;
+        amount.innerText=newNumber;
+    });
+    //button2-付款：页面数据修改，数据库修改
+    button2.addEventListener('click',function(e){
+        var image=document.createElement('img');
+        image.src='/payImg';//缺陷，method只能为为get
+        //需要返回一个图片
+        image.onload=function(){
+          alert("打钱成功");
+          amount.innerText=amount.innerText-1;
+        }
+        image.onerror=function(){
+          alert("打钱失败")
+        }
+    });
+    //SRJ server return javascript
+    //button4-付款：用DOM方式解决跨越问题
+    button4.addEventListener('click',function(e){
+        var script=document.createElement('script');
+        var functionName='mmc'+parseInt(Math.random()*100000,10)
+        window[functionName]=function(result){
+            if(result.success){
+                amount.innerText=result.left;
+            }
+         }
+        script.src="http://jack.com:8888/payScript?callback="+functionName;
+        document.body.appendChild(script);
+        script.onload=function(e){
+           e.currentTarget.remove();
+           delete window[functionName];
+        }
+        script.onerror=function(){
+          alert("打钱失败")
+          e.currentTarget.remove();
+          delete window[functionName];
+        }
+        
+    });
+    //button5-付款：jquery,ajax方式解决跨越问题
+    $(button5).on('click',function(){
+        $.ajax({
+            url:"http://jack.com:8888/payScript",
+            dataType:"jsonp",
+            success:function( result ){
+                if(result.success){
+                    amount.innerText=result.left;
+                }
+            }
+        });
+    });
+</script>
+
