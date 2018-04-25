@@ -33,7 +33,52 @@
 <form action="/pay" method="post" target="result">
     <input type="submit" value="button3-付款：页面返回结果显示在iframe">
 </form>
-
+<button id="button6">使用原生JS来发送ajax请求-XML</button><br>
+<button id="button7">使用原生JS来发送ajax请求-JSON</button><br>
+ <h2>JSON</h2>
+ <h2>1、JSON没有抄袭function和undefined</h2>
+ <h2>2、JSON的字符串首尾必须是"</h2>
+ <table>
+     <caption>JS VS JSON</caption>
+     <tr><td>JS</td><td>JSON</td></tr>
+     <tr><td>undefined</td><td>没有</td></tr>
+     <tr><td>null</td><td>null</td></tr>
+     <tr><td>['a','b']</td><td>["a","b"]</td></tr>
+     <tr><td>function fn(){}</td><td>没有</td></tr>
+     <tr><td>'frank'</td><td>"frank"</td></tr>
+     <tr><td>{name:'frank'}</td><td>{"name":"frank"}</td></tr>
+     <tr><td>var a={};a.self=a</td><td>没有变量</td></tr>
+     <tr><td>{__proto__}</td><td>没有原型链</td></tr>
+ </table>
+ <h2>同源策略（form表单提交和ajax提交的区别）</h2>
+ <h3>因为原页面用form提交到另一个域名之后，原页面的脚步无法获取新页面中的内容。所以浏览器认为这是安全的。</h3>
+ <h3>而AJAX是可以读取相应内容的，因此浏览器不能允许你这样做。</h3>
+ <h3>如果你细心的话会发发现，其实请求已经发送出去了，只是拿不到响应而已。</h3>
+ <h3>所以浏览器这个策略的本质是：一个域名的JS，在未经允许的情况下，不得读取另一个域名的内容。但浏览器并不阻止你向另一个域名发送请求。</h3>
+ <h2>只有 协议+域名+端口 一模一样才允许发AJAX请求</h2>
+ <ul>
+     <li>1、http://baidu.com可以向http://www.baidu.com发AJAX请求吗？N</li>
+     <li>2、http://baidu.com:80 可以向 http://baidu.com:81发AJAX请求吗？N</li>
+ </ul>
+ <ul>
+     <li>GET /xxx HTTP/1.1</li>
+     <li>Host:localhost:8080</li>
+     <li>Content-Type:application/x-www-url-encoded</li>
+     <li></li>
+     <li></li>
+     <li>HTTP/1.1 200 OK</li>
+     <li>Content-Type:text/html</li>
+     <li></li>
+     <li></li>
+     <li>1、JS可以设置任意请求Header吗？</li>
+     <li>第一部分 request.open('get','/xxx')</li>
+     <li>第二部分 request.setHeader('content-type','x-www-form-urlencoded')</li>
+     <li>第四部分 request.send('a=1&b=2')</li>
+     <li>2、JS可以获取任意响应Header吗？</li>
+     <li>第一部分 request.status/request.statusText</li>
+     <li>第二部分 request.getResponseHeader()/request.getAllResponseHeaders()</li>
+     <li>第四部分 request.responseText</li>
+ </ul>
 <iframe name="result" src="about:blank" frameborder="0">
 </iframe>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -93,5 +138,52 @@
             }
         });
     });
+    button6.onclick=function(){
+      var xhr=new XMLHttpRequest();
+      xhr.open('GET','./xxx');
+      xhr.onreadystatechange=function(){
+        if(xhr.readyState==4){
+            if(xhr.status>=200 && xhr.status<300){
+                console.log("说明请求成功");
+                var parser=new DOMParser();
+                var xmlDoc=parser.parseFromString(xhr.responseText,'text/xml');
+                var to=xmlDoc.getElementsByTagName('to')[0].textContent;
+                console.log(to);
+                
+
+            }else if(xhr.status>=400){
+                console.log("说明请求失败");
+            }
+        }
+        
+      }
+      xhr.send();
+    }
+
+    button7.onclick=function(){
+      var xhr=new XMLHttpRequest();
+      xhr.open('POST','/yyy');
+      xhr.setRequestHeader("name","frank")
+      xhr.onreadystatechange=function(){
+        if(xhr.readyState==4){
+            if(xhr.status>=200 && xhr.status<300){
+                console.log(xhr.getAllResponseHeaders());
+                console.log(xhr.statusText)
+                console.log(xhr.getResponseHeader("Content-Type"));
+                console.log("说明请求成功");
+                console.log(typeof xhr.responseText);
+                var object=JSON.parse(xhr.responseText);
+                console.log(typeof object);
+                console.log(object);
+        
+
+            }else if(xhr.status>=400){
+                console.log("说明请求失败");
+            }
+        }
+        
+      }
+      xhr.send("我偏要设置第四部分");
+    }
 </script>
 
